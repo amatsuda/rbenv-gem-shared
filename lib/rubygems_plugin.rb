@@ -11,6 +11,8 @@ Gem.post_install do |installer|
     next true unless spec.extensions.empty?
   end
 
+  next true if spec.name == 'bundler'
+
   FileUtils.mkdir_p File.expand_path('~/.gem/rbenv_shared')
   shared_gem_path = File.expand_path "~/.gem/rbenv_shared/#{spec.full_name}"
 
