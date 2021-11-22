@@ -13,6 +13,10 @@ Gem.post_install do |installer|
 
   next true if spec.name == 'bundler'
 
+  if defined?(Bundler) && Bundler.definition && (bundler_definition = Bundler.definition.dependencies.detect {|d| d.name == spec.name })
+    next true if bundler_definition.source.is_a? Bundler::Source::Path
+  end
+
   fileutils = defined?(::Bundler::FileUtils) ? ::Bundler::FileUtils : FileUtils
 
   fileutils.mkdir_p File.expand_path('~/.gem/rbenv_shared')
