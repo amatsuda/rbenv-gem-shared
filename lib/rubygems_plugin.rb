@@ -13,16 +13,18 @@ Gem.post_install do |installer|
 
   next true if spec.name == 'bundler'
 
-  FileUtils.mkdir_p File.expand_path('~/.gem/rbenv_shared')
+  fileutils = defined?(::Bundler::FileUtils) ? ::Bundler::FileUtils : FileUtils
+
+  fileutils.mkdir_p File.expand_path('~/.gem/rbenv_shared')
   shared_gem_path = File.expand_path "~/.gem/rbenv_shared/#{spec.full_name}"
 
   if File.exist?(shared_gem_path)
-    FileUtils.rm_rf spec.full_gem_path
+    fileutils.rm_rf spec.full_gem_path
   else
-    FileUtils.mv spec.full_gem_path, shared_gem_path
+    fileutils.mv spec.full_gem_path, shared_gem_path
   end
 
-  FileUtils.ln_s shared_gem_path, spec.full_gem_path
+  fileutils.ln_s shared_gem_path, spec.full_gem_path
 
   true
 end
