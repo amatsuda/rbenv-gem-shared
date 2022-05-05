@@ -4,7 +4,7 @@ require 'rubygems'
 
 using Module.new {
   refine Object do
-    def git_repo?(dir = Dir.pwd)
+    def git_repo?(dir)
       `cd #{dir} && git rev-parse --is-inside-work-tree 2> /dev/null`.chomp == 'true'
     end
 
@@ -39,7 +39,7 @@ Gem.post_install do |installer|
   end
 
   # Skip if current dir and the target dir are inside same Git repo
-  next true if git_repo? && git_repo?(spec.full_gem_path) && within_same_git_repo?(Dir.pwd, spec.full_gem_path)
+  next true if git_repo?(Dir.pwd) && git_repo?(spec.full_gem_path) && within_same_git_repo?(Dir.pwd, spec.full_gem_path)
 
   fileutils = defined?(::Bundler::FileUtils) ? ::Bundler::FileUtils : FileUtils
 
