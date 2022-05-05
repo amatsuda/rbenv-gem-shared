@@ -41,6 +41,9 @@ Gem.post_install do |installer|
   # Skip if current dir and the target dir are inside same Git repo
   next true if git_repo?(Dir.pwd) && git_repo?(spec.full_gem_path) && within_same_git_repo?(Dir.pwd, spec.full_gem_path)
 
+  # Skip if the installed gem is in a Git repo and appears to be a sub component of another gem (e.g. rails, rspec, kaminari, aws-sdk, ...)
+  next true if git_repo?(Dir.pwd) && git_repo?(spec.full_gem_path) && within_same_git_repo?(spec.full_gem_path, File.expand_path('..', spec.full_gem_path))
+
   fileutils = defined?(::Bundler::FileUtils) ? ::Bundler::FileUtils : FileUtils
 
   fileutils.mkdir_p File.expand_path('~/.gem/rbenv_shared')
