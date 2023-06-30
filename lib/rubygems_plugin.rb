@@ -33,9 +33,9 @@ Gem.post_install do |installer|
 
   next true if spec.name == 'bundler'
 
-  # Skip if installed via Bundler `path:` option
+  # Skip if installed via Bundler `path:` or `git:` option
   if defined?(Bundler) && Bundler.definition && (bundler_definition = Bundler.definition.dependencies.detect {|d| d.name == spec.name })
-    next true if bundler_definition.source.is_a? Bundler::Source::Path
+    next true if bundler_definition.source.is_a?(Bundler::Source::Path) || bundler_definition.source.is_a?(Bundler::Source::Git)
   end
 
   # Skip if current dir and the target dir are inside same Git repo
