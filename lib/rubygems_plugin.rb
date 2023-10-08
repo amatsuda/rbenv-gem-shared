@@ -9,7 +9,7 @@ using Module.new {
     end
 
     def within_same_git_repo?(dir1, dir2)
-      (git_first_commit(dir1) == git_first_commit(dir2)) && (git_last_commit(dir1) == git_last_commit(dir2))
+      (dir1 == dir2) || ((git_first_commit(dir1) == git_first_commit(dir2)) && (git_last_commit(dir1) == git_last_commit(dir2)))
     end
 
     def git_first_commit(dir)
