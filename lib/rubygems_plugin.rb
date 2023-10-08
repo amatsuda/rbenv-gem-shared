@@ -9,15 +9,13 @@ using Module.new {
     end
 
     def within_same_git_repo?(dir1, dir2)
-      (dir1 == dir2) || ((git_first_commit(dir1) == git_first_commit(dir2)) && (git_last_commit(dir1) == git_last_commit(dir2)))
+      (dir1 == dir2) || (git_toplevel(dir1) == git_toplevel(dir2))
     end
 
-    def git_first_commit(dir)
-      `cd #{dir} && git rev-list HEAD | tail -1`.chomp
-    end
+    private
 
-    def git_last_commit(dir)
-      `cd #{dir} && git rev-parse HEAD`.chomp
+    def git_toplevel(dir)
+      `cd #{dir} && git rev-parse --show-toplevel`.chomp
     end
   end
 }
