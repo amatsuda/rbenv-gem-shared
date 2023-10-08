@@ -17,7 +17,7 @@ using Module.new {
     end
 
     def git_last_commit(dir)
-      `cd #{dir} && git rev-list --reverse HEAD | tail -1`.chomp
+      `cd #{dir} && git rev-parse HEAD`.chomp
     end
   end
 }
