@@ -60,6 +60,19 @@ module RbenvGemShared
   def share_cache_file(cache_file, fileutils = FileUtils)
     share cache_file, File.join(shared_cache_dir, File.basename(cache_file)), fileutils
   end
+
+  # Did RubyGems install this gem into a gem home, as `<gem_home>/gems/<full_name>`? Bundler runs
+  # the install hooks for a `path:` gem too, whose directory is the source checkout itself (and
+  # whose installer has no gem home): sharing that removed the checkout's directory. A Rails app
+  # made by `rails new --dev` names only `rails` by path, and the framework gems come from the
+  # same checkout without being dependencies of their own, so the Bundler and Git checks below
+  # let them through.
+  def installed_into_gem_home?(installer, spec)
+    gem_home = installer.respond_to?(:gem_home) && installer.gem_home
+    return false unless gem_home
+
+    File.expand_path(spec.full_gem_path) == File.expand_path(File.join(gem_home, 'gems', spec.full_name))
+  end
 end
 
 # move the installed gem to the shared dir and symlink to it
@@ -77,6 +90,9 @@ Gem.post_install do |installer|
   end
 
   next true if spec.name == 'bundler'
+
+  # Never a gem's source directory: only what RubyGems installed into a gem home is moved
+  next true unless RbenvGemShared.installed_into_gem_home?(installer, spec)
 
   # Skip if installed via Bundler `path:` or `git:` option
   if defined?(Bundler) && Bundler.definition && (bundler_definition = Bundler.definition.dependencies.detect {|d| d.name == spec.name })

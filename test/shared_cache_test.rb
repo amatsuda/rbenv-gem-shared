@@ -121,7 +121,54 @@ class SharedCacheTest < Minitest::Test
     assert File.file?(cache_file)
   end
 
+  def test_post_install_shares_installed_gem_dir
+    gem_home = File.join(@tmp, 'gem_home')
+    install_gem gem_home, 'dummyshared', '1.0.0'
+
+    gem_dir = File.join(gem_home, 'gems', 'dummyshared-1.0.0')
+    shared = File.join(ENV['HOME'], '.gem', 'rbenv_shared', 'dummyshared-1.0.0')
+    assert File.symlink?(gem_dir), "#{gem_dir} should be a symlink"
+    assert_equal shared, File.readlink(gem_dir)
+    assert File.file?(File.join(shared, 'lib', 'dummyshared.rb'))
+  end
+
+  # Bundler runs the hooks for a `path:` gem with the source checkout as its directory, and an
+  # installer that has no gem home. With a shared copy of the same version already there, the
+  # checkout's directory used to be removed and replaced by a symlink to that copy.
+  def test_post_install_leaves_a_path_gem_alone
+    checkout = File.join(@tmp, 'checkout', 'dummypath')
+    FileUtils.mkdir_p File.join(checkout, 'lib')
+    File.write File.join(checkout, 'lib', 'dummypath.rb'), "module Dummypath; end\n"
+    shared = File.join(ENV['HOME'], '.gem', 'rbenv_shared', 'dummypath-1.0.0')
+    FileUtils.mkdir_p shared
+
+    spec = Gem::Specification.new do |s|
+      s.name = 'dummypath'
+      s.version = '1.0.0'
+      s.summary = 'dummy'
+      s.authors = ['test']
+      s.full_gem_path = checkout
+    end
+    path_installer = Struct.new(:spec, :gem_home).new(spec, nil)
+    Dir.chdir(@tmp) do
+      Gem.post_install_hooks.each {|hook| hook.call(path_installer) }
+    end
+
+    refute File.symlink?(checkout), "#{checkout} should be left as it is"
+    assert File.file?(File.join(checkout, 'lib', 'dummypath.rb'))
+  end
+
   private
+
+  def install_gem(gem_home, name, version)
+    ENV['GEM_HOME'] = gem_home
+    ENV['GEM_PATH'] = gem_home
+    Gem.clear_paths
+    gem_file = build_gem(name, version)
+    Gem::DefaultUserInteraction.use_ui(Gem::SilentUI.new) do
+      Gem::Installer.at(gem_file, install_dir: gem_home, ignore_dependencies: true, wrappers: false).install
+    end
+  end
 
   def build_gem(name, version)
     dir = File.join(@tmp, 'build')
